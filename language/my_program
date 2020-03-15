@@ -1,0 +1,14 @@
+myFunct = lambda(n) {
+  if n <= 1 and n > 0 or n == true {
+    return 1;
+  } else {
+    return n + myFunct(n - 1);
+  }
+}
+
+a1_a2 = "1235g gr , fsdg";
+
+main = lambda(a) {
+  b = 25;
+  myFunct(10);
+}
