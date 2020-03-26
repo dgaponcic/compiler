@@ -5,37 +5,34 @@
 
 using namespace std;
 
-Number::Number() {};
 Number::Number(float value) {
   nb_value = value;
 }
 expression_type Number::get_type() {
-  return __type;
+  return number_expr;
 }
 
 String::String(string str) {
   value = str;
 }
 expression_type String::get_type() {
-  return __type;
+  return string_expr;
 }
 
 
-Boolean::Boolean() {}
 Boolean::Boolean(bool value) {
   bool_value = value;
 }
 expression_type Boolean::get_type() {
-  return __type;
+  return boolean_expr;
 }
 
 
-Variable::Variable () {}
 Variable::Variable(string ident) {
   identififier = ident;
 }
 expression_type Variable::get_type() {
-  return __type;
+  return var_expr;
 }
 
 
@@ -43,7 +40,7 @@ Prog_Expression::Prog_Expression(vector<Expression*>exprs) {
   prog_exprs = exprs;
 }
 expression_type Prog_Expression::get_type() {
-  return __type;
+  return prog_expr;
 }
 
 
@@ -53,7 +50,7 @@ Lambda::Lambda(vector<Expression*> params, Prog_Expression *lambda_body) {
 }
 
 expression_type Lambda::get_type() {
-  return __type;
+  return lambda_expr;
 }
 
 
@@ -62,7 +59,7 @@ Call::Call(Variable *function_name, vector<Expression*> funct_args) {
   args = funct_args;
 }
 expression_type Call::get_type() {
-  return __type;
+  return call_expr;
 }
 
 
@@ -73,7 +70,7 @@ If_Expression::If_Expression(Expression *condition, Prog_Expression *then_expr, 
 }
 
 expression_type If_Expression::get_type() {
-  return __type;
+  return if_expr;
 }
 
 
@@ -83,7 +80,7 @@ Assigment::Assigment(string oper, Expression *left_branch, Expression *right_bra
   left = left_branch;
 }
 expression_type Assigment::get_type() {
-  return __type;
+  return assigment_expr;
 }
 
 
@@ -94,7 +91,7 @@ Binary::Binary(string oper, Expression *left_branch, Expression *right_branch) {
 }
 
 expression_type Binary::get_type() {
-  return __type;
+  return binary_expr;
 }
 
 Paren_Expr::Paren_Expr(Expression *expression) {
@@ -102,7 +99,7 @@ Paren_Expr::Paren_Expr(Expression *expression) {
 }
 
 expression_type Paren_Expr::get_type() {
-  return __type;
+  return paren_expr;
 }
 
 
@@ -111,7 +108,7 @@ Return_Expr::Return_Expr(Expression *return_expression) {
 }
 
 expression_type Return_Expr::get_type() {
-  return __type;
+  return return_expr;
 }
 
 
@@ -119,8 +116,8 @@ expression_type Return_Expr::get_type() {
     token_stream = stream;
   }
 
-  Expression *Parser::parse_bool() {
-    bool bool_val = token_stream->next().val == "true";
+  Expression *Parser::parse_bool(string val) {
+    bool bool_val = val == "true";
     Expression *bool_res = new Boolean(bool_val);
     return bool_res;
   }
@@ -172,16 +169,12 @@ expression_type Return_Expr::get_type() {
   }
 
   Expression *Parser::maybe_call(function<Expression*()> expr) {
-    try {
     Expression *expression = expr();
     
     if (is_punct("(") && expression->get_type() == var_expr) {
       return parse_call((Variable*)expression);
     } else {
       return expression;
-    }
-    } catch(const char* msg) {
-      throw msg;
     }
   }
 
@@ -221,8 +214,10 @@ If_Expression *Parser::parse_if() {
   if (is_kw("else")) {
     skip_kw("else");
     Expression *else_expr = parse_expression();
+    skip_punct(";");
     return new If_Expression(cond, (Prog_Expression*)then, (Prog_Expression*)else_expr);
   }
+  skip_punct(";");
   return new If_Expression(cond, (Prog_Expression*)then);
 }
 
@@ -250,20 +245,9 @@ Return_Expr *Parser::parse_return() {
   return new Return_Expr(return_expression);
 }
 
-Expression *Parser::parse_atom() {
-  return maybe_call([&](){
-    if (is_punct("(")) {
-      Expression *expr = new Paren_Expr(read_paren_expr());
-      return expr;
-    }
-    else if (is_punct("{")) {
-      return (Expression*)parse_prog();
-    }
-    else if (is_kw("if")) {
+Expression *Parser::parse_keyword() {
+    if (is_kw("if")) {
       return (Expression*)parse_if();
-    }
-    else if (token_stream->peek().type == 7) {
-      return parse_bool();
     }
     else if (is_kw("lambda")) {
       return (Expression*)parse_lambda();
@@ -273,35 +257,82 @@ Expression *Parser::parse_atom() {
       skip_punct(";");
       return ret;
     }
-
-    token tok = token_stream->next();
-
-    if(tok.type == 2) {
-      Expression *res = new Number(strtof(tok.val.c_str(), 0));
-      return res;
-    }
-
-    else if(tok.type == 4) {
-      Expression *res = new String(tok.val);
-      return res;
-    }
-
-    else if(tok.type == 1) {
-      Expression *res = new Variable(tok.val);;
-      return res;
-    } 
-    else if (tok.type == 3 && tok.val == "-") {
-      token_stream->next();
-      tok = token_stream->peek();
-      if (tok.type == 2) {
-        Expression *res = new Number(-strtof(tok.val.c_str(), 0));
-        token_stream->next();
-        return res;
-      }
-    }
-
     unexpected();
     throw;
+}
+
+Expression *Parser::parse_punct() {
+    if (is_punct("(")) {
+      Expression *expr = new Paren_Expr(read_paren_expr());
+      return expr;
+    }
+    else if (is_punct("{")) {
+      return (Expression*)parse_prog();
+    }
+    unexpected();
+    throw;
+}
+
+Expression *Parser::parse_negative_numbers() {
+  token tok = token_stream->peek();
+  if (tok.type == 2) {
+    Expression *res = new Number(-strtof(tok.val.c_str(), 0));
+      token_stream->next();
+      return res;
+  }
+  unexpected();
+  throw;
+}
+
+Expression *Parser::parse_simple_types(token tok) {
+
+  switch (tok.type) {
+    case 2: {
+      Expression *res = new Number(strtof(tok.val.c_str(), 0));
+      return res;
+      break;
+    }
+
+    case 7: {
+      return parse_bool(tok.val);
+      break;
+    }
+
+    case 4: {
+      Expression *res = new String(tok.val);
+      return res;
+      break;
+    }
+
+    case 1: {
+      Expression *res = new Variable(tok.val);;
+      return res;
+      break;
+    }
+    
+    case 3: {
+      if (tok.val == "-") {
+        token_stream->next();
+        return parse_negative_numbers();
+      }
+      break;
+    }
+  }
+  unexpected();
+  throw;
+}
+
+Expression *Parser::parse_atom() {
+  return maybe_call([&](){
+    if (token_stream->peek().type == 5) {
+      return parse_punct();
+    }
+    else if (token_stream->peek().type == 6) {
+      return parse_keyword();
+    }
+
+    token tok = token_stream->next();
+    return parse_simple_types(tok);
   });
 }
 
@@ -342,19 +373,13 @@ Expression* Parser::read_paren_expr() {
   }
 
   vector<Expression*> Parser::parseTopLevel() {
-    try {
     vector<Expression*> ast;
     token_stream->next();
     while(!token_stream ->eof() && token_stream->peek().type != 0) {
       ast.push_back(parse_expression());
-      if (!token_stream->eof() && token_stream->peek().type == 5 && token_stream->peek().val == ";") {
-        skip_punct(";");
-      }
+      skip_punct(";");
     }
     return ast;
-    } catch(const char* msg) {
-      throw msg;
-    }
   }
 
   vector<Expression*> Parser::parse() {
@@ -364,110 +389,3 @@ Expression* Parser::read_paren_expr() {
       throw msg;
     }
   }
-
-
-void print_ast(Expression *expr, int ident) {
-  switch (expr->get_type()) {
-    case number_expr: {
-      Number* number = (Number*)expr;
-      cout << std::string(ident, ' ' ) << number->nb_value << '\n';
-      break;
-    }
-
-    case string_expr: {
-      String* str = (String*)expr;
-      cout << std::string(ident, ' ' ) << str->value << '\n';
-      break;
-    }
-
-    case boolean_expr: {
-      Boolean* boolean = (Boolean*)expr;
-      cout << std::string(ident, ' ' ) << boolean->bool_value << '\n';
-      break;
-    }
-
-    case assigment_expr: {
-      Assigment* assigment = (Assigment*)expr;
-      cout << std::string(ident, ' ' ) << assigment->op << '\n';
-      print_ast(assigment->left, ident + 2);
-      print_ast(assigment->right, ident + 2);
-      break;
-    }
-
-    case prog_expr: {
-      Prog_Expression* prog_expression = (Prog_Expression*)expr;
-      for (Expression *expression: prog_expression->prog_exprs) {
-        print_ast(expression, ident + 2);
-      }
-      break;
-    }
-
-    case if_expr: {
-      If_Expression* if_expression = (If_Expression*)expr;
-      cout << std::string(ident, ' ' ) << "if" << '\n';
-      print_ast(if_expression ->cond, ident + 2);
-      cout << std::string(ident, ' ' ) << "then" << '\n';
-      print_ast(if_expression ->then, ident + 2);
-      if(if_expression->else_expression) {
-        cout << std::string(ident, ' ' ) << "else" << '\n';
-        print_ast(if_expression->else_expression, ident + 2);
-      }
-
-      break;
-    }
-
-    case paren_expr: {
-      Paren_Expr* paren_expr = (Paren_Expr*)expr;
-      cout << std::string(ident, ' ' ) << "paren" << '\n';
-      print_ast(paren_expr->expr, ident + 2);
-      break;
-    }
-
-    case binary_expr: {
-      Binary* binary = (Binary*)expr;
-      cout << std::string(ident, ' ' ) << binary->op << '\n';
-      print_ast(binary->left, ident + 2);
-      print_ast(binary->right, ident + 2);
-      break;
-    }
-
-    case var_expr: {
-      Variable* var = (Variable*)expr;
-      cout << std::string(ident, ' ' ) << var->identififier << '\n';
-      break;
-    }
-
-    case lambda_expr: {
-      Lambda* lambda = (Lambda*)expr;
-      cout << std::string(ident, ' ' ) << "lambda params" << '\n';
-      for (Expression *param: lambda->parameters) {
-        print_ast(param, ident + 2);
-      }
-      cout << std::string(ident, ' ' ) << "lambda body" << '\n';
-      print_ast(lambda->body, ident + 2);
-      break;
-    }
-
-    case call_expr: {
-      Call* call = (Call*)expr;
-      cout << std::string(ident, ' ' ) << "call" << '\n';
-      print_ast(call->function, ident + 2);
-
-      cout << std::string(ident, ' ' ) << "args" << '\n';
-      for (Expression *arg: call->args) {
-        print_ast(arg, ident + 2);
-      }
-      break;
-    }
-
-    case return_expr: {
-      Return_Expr* return_expr = (Return_Expr*)expr;
-      cout << std::string(ident, ' ' ) << "return" << '\n';
-      print_ast(return_expr->ret_expr, ident + 2);
-      break;
-    }
-
-    default:
-      break;
-  }
-}

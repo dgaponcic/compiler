@@ -38,7 +38,7 @@ token TokenStream::peek() {
 }
 
 bool TokenStream::eof() {
-  return input_stream.eof();
+  return input_stream.eof() && curr_token.type == null_token;
 }
 
 void TokenStream::croak(string msg) {

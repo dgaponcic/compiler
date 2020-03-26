@@ -1,6 +1,5 @@
 #include "../include/input_stream.h"
 #include <string>
-#include <stdlib.h>
 #include <stdexcept>
 #include <string>
 

@@ -34,97 +34,64 @@ class Number: public Expression {
   public:
 
     float nb_value;
-    public:
-    Number ();
     Number(float value);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = number_expr;
 };
 
 class String: public Expression {
   public:
     string value;
-
     String(string str);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = string_expr;
 };
 
 class Boolean: public Expression {
   public:
     bool bool_value;
-    Boolean();
     Boolean(bool value);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = boolean_expr;
 };
 
 class Variable: public Expression {
   public:
-
     string identififier;
-    Variable ();
     Variable(string ident);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = var_expr;
 };
 
 
 class Prog_Expression: public Expression {
   public:
-
     vector<Expression*>prog_exprs;
-
     Prog_Expression(vector<Expression*>exprs);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = prog_expr;
 };
 
 class Lambda: public Expression {
   public:
+    vector<Expression*> parameters;
+    Prog_Expression *body;
+    Lambda(vector<Expression*> params, Prog_Expression *lambda_body);
 
-  vector<Expression*> parameters;
-  Prog_Expression *body;
-  Lambda(vector<Expression*> params, Prog_Expression *lambda_body);
-
-  expression_type get_type();
-
-  private:
-    expression_type __type = lambda_expr;
+    expression_type get_type();
 };
 
 class Call: public Expression {
   public:
-
     Variable *function;
     vector<Expression*> args;
-
     Call(Variable *function_name, vector<Expression*> funct_args);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = call_expr;
 };
 
 class If_Expression: public Expression {
   public:
-
     Expression *cond;
     Prog_Expression *then;
     Expression *else_expression;
@@ -132,65 +99,43 @@ class If_Expression: public Expression {
     If_Expression(Expression *condition, Prog_Expression *then_expr, Prog_Expression *else_expr = NULL);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = if_expr;
 };
 
 class Assigment: public Expression {
   public:
-
     string op;
     Expression *right;
     Expression *left;
-
     Assigment(string oper, Expression *left_branch, Expression *right_branch);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = assigment_expr;
 };
 
 class Binary: public Expression {
   public:
-
     string op;
     Expression *right;
     Expression *left;
-
     Binary(string oper, Expression *left_branch, Expression *right_branch);
 
     expression_type get_type();
-  
-  private:
-    expression_type __type = binary_expr;
 };
 
 class Paren_Expr: public Expression {
   public:
-
     Expression *expr;
-
     Paren_Expr(Expression *expression);
 
     expression_type get_type();
-  
-  private:
-    expression_type __type = paren_expr;
 };
 
 
 class Return_Expr: public Expression {
   public:
     Expression *ret_expr;
-
     Return_Expr(Expression *return_expression);
 
     expression_type get_type();
-
-  private:
-    expression_type __type = return_expr;
 };
 
 class Parser {
@@ -208,7 +153,7 @@ class Parser {
   TokenStream *token_stream;
   Parser(TokenStream *stream);
 
-  Expression *parse_bool();
+  Expression *parse_bool(string val);
 
   bool is_punct(string ch);
 
@@ -240,6 +185,14 @@ class Parser {
 
   Return_Expr *parse_return();
 
+  Expression *parse_keyword();
+
+  Expression *parse_punct();
+
+  Expression *parse_simple_types(token tok);
+
+  Expression *parse_negative_numbers();
+
   Expression *parse_atom();
 
   Expression* read_paren_expr();
@@ -253,6 +206,5 @@ class Parser {
   vector<Expression*> parse();
 };
 
-void print_ast(Expression *expr, int ident = 0);
 
 #endif
