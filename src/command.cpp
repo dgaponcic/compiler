@@ -67,8 +67,8 @@ token NumberCommand::execute(InputStream* input_stream) {
   return curr_token;
 }
 
-TokenCommand* TokenCommandDispatcher::dispatch(char chr) {
-  if (is_whitespace(chr)) {
+TokenCommand* TokenCommandDispatcher::dispatch(char chr, InputStream* input_stream) {
+  if (is_whitespace(chr) || input_stream->eof()) {
     return new EOFCommand();
   }
 
@@ -93,6 +93,7 @@ TokenCommand* TokenCommandDispatcher::dispatch(char chr) {
   } 
 
   else  {
-    return new NullTokenCommand();
+    input_stream->croak("Can't handle character: " + chr);
+    throw;
   }
 }

@@ -20,6 +20,8 @@ class TokenStream {
     token next();
     token peek();
     bool eof();
+    void croak(string msg);
+
 };
 
 #endif

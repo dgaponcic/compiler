@@ -25,7 +25,7 @@ token TokenStream::next() {
   }
 
   read_while(is_whitespace, &input_stream);
-  TokenCommand* command = tcd.dispatch(input_stream.peek());
+  TokenCommand* command = tcd.dispatch(input_stream.peek(), &input_stream);
   curr_token = command->execute(&input_stream);
   return curr_token;
 }
@@ -39,4 +39,8 @@ token TokenStream::peek() {
 
 bool TokenStream::eof() {
   return input_stream.eof();
+}
+
+void TokenStream::croak(string msg) {
+  return input_stream.croak(msg);
 }

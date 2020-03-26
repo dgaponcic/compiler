@@ -1,3 +1,4 @@
+
 #include "../include/parser.h"
 #include "../include/command.h"
 #include "../include/token_stream.h"
@@ -12,12 +13,11 @@ expression_type Number::get_type() {
   return __type;
 }
 
-
 String::String(string str) {
   value = str;
 }
 expression_type String::get_type() {
-return __type;
+  return __type;
 }
 
 
@@ -97,6 +97,14 @@ expression_type Binary::get_type() {
   return __type;
 }
 
+Paren_Expr::Paren_Expr(Expression *expression) {
+  expr = expression;
+}
+
+expression_type Paren_Expr::get_type() {
+  return __type;
+}
+
 
 Return_Expr::Return_Expr(Expression *return_expression) {
   ret_expr = return_expression;
@@ -133,29 +141,47 @@ expression_type Return_Expr::get_type() {
   }
 
   void Parser::skip_punct(string ch) {
-        if (is_punct(ch)) {
-          token_stream->next();
-        }
+    if (is_punct(ch)) {
+      token_stream->next();
+    } else {
+      token_stream->croak("Expecting Punctuation: \\" + ch + "\\.");
+      throw;
+    }
   }
 
   void Parser::skip_kw(string kw) {
-        if (is_kw(kw)) {
-          token_stream->next();
-        }
+    if (is_kw(kw)) {
+      token_stream->next();
+    }  else {
+        token_stream->croak("Expecting Keyword: \\" + kw + "\\.");
+        throw;
+      }
     }
   
   void Parser::skip_op(string op) {
     if (is_op(op)) {
       token_stream->next();
-    }
+    } else {
+        token_stream->croak("Expecting Operator: \\" + op + "\\.");
+        throw;
+      }
+  }
+
+  void Parser::unexpected() {
+    token_stream->croak("Unexpected token: " + token_stream->peek().val);
   }
 
   Expression *Parser::maybe_call(function<Expression*()> expr) {
+    try {
     Expression *expression = expr();
-    if (is_punct("(")) {
+    
+    if (is_punct("(") && expression->get_type() == var_expr) {
       return parse_call((Variable*)expression);
     } else {
       return expression;
+    }
+    } catch(const char* msg) {
+      throw msg;
     }
   }
 
@@ -214,7 +240,7 @@ Lambda *Parser::parse_lambda() {
 }
 
 Call *Parser::parse_call(Variable *funct) {
-  vector<Expression*> args = delimited("(", ")", ",", [&](){ return parse_expression(); });
+  vector<Expression*> args = delimited("(", ")", ",", [&](){ return parse_expression(false); });
   return new Call(funct, args);
 }
 
@@ -225,55 +251,71 @@ Return_Expr *Parser::parse_return() {
 }
 
 Expression *Parser::parse_atom() {
+  return maybe_call([&](){
+    if (is_punct("(")) {
+      Expression *expr = new Paren_Expr(read_paren_expr());
+      return expr;
+    }
+    else if (is_punct("{")) {
+      return (Expression*)parse_prog();
+    }
+    else if (is_kw("if")) {
+      return (Expression*)parse_if();
+    }
+    else if (token_stream->peek().type == 7) {
+      return parse_bool();
+    }
+    else if (is_kw("lambda")) {
+      return (Expression*)parse_lambda();
+    }
+    else if (is_kw("return")) {
+      Expression *ret = (Expression*)parse_return();
+      skip_punct(";");
+      return ret;
+    }
 
-    return maybe_call([&](){
+    token tok = token_stream->next();
 
-      if (is_punct("(")) {
+    if(tok.type == 2) {
+      Expression *res = new Number(strtof(tok.val.c_str(), 0));
+      return res;
+    }
+
+    else if(tok.type == 4) {
+      Expression *res = new String(tok.val);
+      return res;
+    }
+
+    else if(tok.type == 1) {
+      Expression *res = new Variable(tok.val);;
+      return res;
+    } 
+    else if (tok.type == 3 && tok.val == "-") {
+      token_stream->next();
+      tok = token_stream->peek();
+      if (tok.type == 2) {
+        Expression *res = new Number(-strtof(tok.val.c_str(), 0));
         token_stream->next();
-        Expression *expr = parse_expression();
-        skip_punct("(");
-        return expr;
-      }
-
-      if (is_punct("{")) {
-        return (Expression*)parse_prog();
-      }
-      if (is_kw("if")) {
-        return (Expression*)parse_if();
-      }
-
-      if (token_stream->peek().type == 7) {
-        return parse_bool();
-      }
-
-      if (is_kw("lambda")) {
-        return (Expression*)parse_lambda();
-      }
-
-      if (is_kw("return")) {
-        return (Expression*)parse_return();
-      }
-
-      token tok = token_stream->next();
-
-      if(tok.type == 2) {
-        Expression *res = new Number(strtof(tok.val.c_str(), 0));
         return res;
       }
+    }
 
-      if(tok.type == 4) {
-        Expression *res = new String(tok.val);
-        return res;
-      }
+    unexpected();
+    throw;
+  });
+}
 
-      if(tok.type == 1) {
-        Expression *res = new Variable(tok.val);;
-        return res;
-      }
-    });
-  }
+Expression* Parser::read_paren_expr() {
+  Expression* expr;
+  skip_punct("(");
+
+  expr = maybe_binary(parse_atom(), 0);
+  skip_punct(")");
+  return expr;
+}
 
   Expression *Parser::maybe_binary(Expression *left, int my_prec) {
+
     token tok = token_stream->peek();
 
     if (tok.type == 3) {
@@ -293,27 +335,34 @@ Expression *Parser::parse_atom() {
     return left;
   }
 
-  Expression *Parser::parse_expression() {
+  Expression *Parser::parse_expression(bool is_function_open) {
     return maybe_call([&](){
       return maybe_binary(parse_atom(), 0);
     });
   }
 
   vector<Expression*> Parser::parseTopLevel() {
+    try {
     vector<Expression*> ast;
     token_stream->next();
-    while(!token_stream ->eof() && token_stream->peek().type != null_token) {
+    while(!token_stream ->eof() && token_stream->peek().type != 0) {
       ast.push_back(parse_expression());
       if (!token_stream->eof() && token_stream->peek().type == 5 && token_stream->peek().val == ";") {
-
-        token_stream->next();
+        skip_punct(";");
       }
     }
     return ast;
+    } catch(const char* msg) {
+      throw msg;
+    }
   }
 
   vector<Expression*> Parser::parse() {
-    return parseTopLevel();
+    try {
+      return parseTopLevel();
+    } catch(const char* msg) {
+      throw msg;
+    }
   }
 
 
@@ -364,6 +413,13 @@ void print_ast(Expression *expr, int ident) {
         print_ast(if_expression->else_expression, ident + 2);
       }
 
+      break;
+    }
+
+    case paren_expr: {
+      Paren_Expr* paren_expr = (Paren_Expr*)expr;
+      cout << std::string(ident, ' ' ) << "paren" << '\n';
+      print_ast(paren_expr->expr, ident + 2);
       break;
     }
 

@@ -11,35 +11,39 @@ using namespace std;
 // }
 
 int main(int argc, char **argv) {
-  // if (argc < 2) {
-  //   exit(1);
-  // }
-  // char* program_name = argv[1];
-  // char* my_program = read_program(program_name);
-  // TokenStream token_stream(my_program);
-  // while (!token_stream.eof()) {
-  //   print_struct(token_stream.next());
-  // }
-  // return 0;
+  try {
+    // if (argc < 2) {
+    //   exit(1);
+    // }
+    // char* program_name = argv[1];
+    // char* my_program = read_program(program_name);
+    // TokenStream token_stream(my_program);
+    // while (!token_stream.eof()) {
+    //   print_struct(token_stream.next());
+    // }
+    // return 0;
 
-  if (argc < 2) {
-    exit(1);
-  }
+    if (argc < 2) {
+      exit(1);
+    }
 
-  char* program_name = argv[1];
-  char* my_program = read_program(program_name);
-  TokenStream token_stream = TokenStream(my_program);
+    char* program_name = argv[1];
+    char* my_program = read_program(program_name);
+    TokenStream token_stream = TokenStream(my_program);
 
-  // while (!token_stream.eof()) {
-  //   print_tokens(token_stream.peek());
-  //   token_stream.next();
-  // }
+    // while (!token_stream.eof()) {
+    //   print_tokens(token_stream.peek());
+    //   token_stream.next();
+    // }
 
-  Parser parser = Parser(&token_stream);
-  vector<Expression*> res = parser.parse();
-  for (int i = 0; i < res.size(); i += 1) {
-    print_ast(res[i]);
-  }
-
+    Parser parser = Parser(&token_stream);
+    vector<Expression*> res = parser.parse();
+    for (int i = 0; i < res.size(); i += 1) {
+      print_ast(res[i], 0);
+    }
+  } catch (const char* msg) {
+     cerr << msg << endl;
+   }
+  
   return 0;
 }

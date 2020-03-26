@@ -1,5 +1,10 @@
 #include "../include/input_stream.h"
+#include <string>
 #include <stdlib.h>
+#include <stdexcept>
+#include <string>
+
+using namespace std;
 
 char InputStream::next() {
   char curr_char = input[pos]; 
@@ -25,4 +30,8 @@ char InputStream::peek() {
 
 bool InputStream::eof() {
   return int(peek()) == 0;
+}
+
+void InputStream::croak(string msg) { 
+  throw std::runtime_error(string(msg) + " (" + to_string(line) + ":" + to_string(column) + ")");
 }

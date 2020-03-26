@@ -1,6 +1,9 @@
+#include <string>
+
 #ifndef INPUT_STREAM_H
 #define INPUT_STREAM_H
 
+using namespace std;
 
 class InputStream {
   public:
@@ -14,6 +17,9 @@ class InputStream {
     char peek();
 
     bool eof();
+
+    void croak(string msg);
+
 
   private:
     int pos = 0;

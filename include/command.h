@@ -70,7 +70,7 @@ class NullTokenCommand: virtual public TokenCommand {
 
 class TokenCommandDispatcher {
   public:
-    TokenCommand* dispatch(char chr);
+    TokenCommand* dispatch(char chr, InputStream* input_stream);
 };
 
 #endif

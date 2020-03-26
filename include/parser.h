@@ -22,6 +22,7 @@ enum expression_type {
   null_expr = 9,
   prog_expr = 10,
   return_expr = 11,
+  paren_expr = 12,
 };
 
 class Expression {
@@ -166,6 +167,20 @@ class Binary: public Expression {
     expression_type __type = binary_expr;
 };
 
+class Paren_Expr: public Expression {
+  public:
+
+    Expression *expr;
+
+    Paren_Expr(Expression *expression);
+
+    expression_type get_type();
+  
+  private:
+    expression_type __type = paren_expr;
+};
+
+
 class Return_Expr: public Expression {
   public:
     Expression *ret_expr;
@@ -207,6 +222,8 @@ class Parser {
   
   void skip_op(string op);
 
+  void unexpected();
+
   Expression *maybe_call(function<Expression*()> expr);
 
   vector<Expression*> delimited(string start, string stop, string separator, function<Expression*()> parser);
@@ -225,9 +242,11 @@ class Parser {
 
   Expression *parse_atom();
 
+  Expression* read_paren_expr();
+
   Expression *maybe_binary(Expression *left, int my_prec);
 
-  Expression *parse_expression();
+  Expression *parse_expression(bool is_function_open = false);
 
   vector<Expression*> parseTopLevel();
 
