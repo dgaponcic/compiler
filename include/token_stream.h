@@ -20,8 +20,10 @@ class TokenStream {
     token next();
     token peek();
     bool eof();
-    void croak(string msg);
+    void croak(string msg, bool prev_tok_pos);
 
+    int line;
+    int column;
 };
 
 #endif

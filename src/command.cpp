@@ -93,7 +93,9 @@ TokenCommand* TokenCommandDispatcher::dispatch(char chr, InputStream* input_stre
   } 
 
   else  {
-    input_stream->croak("Can't handle character: " + chr);
+    int line = input_stream->get_line();
+    int column = input_stream->get_column();
+    input_stream->croak("Can't handle character: " + chr, line, column);
     throw;
   }
 }

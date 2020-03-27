@@ -34,7 +34,8 @@ void Parser::skip_punct(string ch) {
   if (is_punct(ch)) {
     token_stream->next();
   } else {
-    token_stream->croak("Expecting Punctuation: \\" + ch + "\\.");
+    // cout << "lll " << token_stream ->line << " " << token_stream->column << "\n";
+    token_stream->croak("Expecting Punctuation: \\" + ch + "\\.", true);
     throw;
   }
 }
@@ -43,7 +44,7 @@ void Parser::skip_kw(string kw) {
   if (is_kw(kw)) {
     token_stream->next();
   }  else {
-      token_stream->croak("Expecting Keyword: \\" + kw + "\\.");
+      token_stream->croak("Expecting Keyword: \\" + kw + "\\.", true);
       throw;
     }
 }
@@ -52,13 +53,14 @@ void Parser::skip_op(string op) {
   if (is_op(op)) {
     token_stream->next();
   } else {
-      token_stream->croak("Expecting Operator: \\" + op + "\\.");
+        // cout << "lll " << token_stream ->line << " " << token_stream->column << "\n";
+      token_stream->croak("Expecting Operator: \\" + op + "\\.", true);
       throw;
     }
 }
 
 void Parser::unexpected() {
-  token_stream->croak("Unexpected token: " + token_stream->peek().val);
+  token_stream->croak("Unexpected token: " + token_stream->peek().val, false);
 }
 
 Expression *Parser::maybe_call(function<Expression*()> expr) {
@@ -87,27 +89,36 @@ vector<Expression*> Parser::delimited(string start, string stop, string separato
     if (is_punct(stop)) break;
     prog.push_back(parser());
   }
+
   skip_punct(stop);
   return prog;
 }
 
 Prog_Expression *Parser::parse_prog() {
-  Prog_Expression *prog = new Prog_Expression(delimited("{", "}", ";", [&]() {return parse_expression();} ));
-  return prog;
+  vector<Expression*> prog;
+  bool first = true;
+  skip_punct("{");
+  while(!token_stream->eof()) {
+    if (is_punct("}")) break;
+    prog.push_back(parse_expression());
+    // cout << "in prog " << 
+    skip_punct(";");
+  }
+
+  skip_punct("}");
+  return new Prog_Expression(prog);
 }
 
 If_Expression *Parser::parse_if() {
   skip_kw("if");
   Expression *cond = parse_expression();
-  Expression *then = parse_expression();
-  
+  Expression *then = parse_prog();
+
   if (is_kw("else")) {
     skip_kw("else");
-    Expression *else_expr = parse_expression();
-    skip_punct(";");
+    Expression *else_expr = parse_prog();
     return new If_Expression(cond, (Prog_Expression*)then, (Prog_Expression*)else_expr);
   }
-  skip_punct(";");
   return new If_Expression(cond, (Prog_Expression*)then);
 }
 
@@ -120,7 +131,7 @@ Expression *Parser::parse_varname() {
 Lambda *Parser::parse_lambda() {
   skip_kw("lambda");
   vector<Expression*> parameters = delimited("(", ")", ",", [&](){ return parse_varname(); });
-  Prog_Expression *body = (Prog_Expression*)parse_expression();
+  Prog_Expression *body = parse_prog();
   return new Lambda(parameters, body);
 }
 
@@ -144,7 +155,6 @@ Expression *Parser::parse_keyword() {
   }
   else if (is_kw("return")) {
     Expression *ret = (Expression*)parse_return();
-    skip_punct(";");
     return ret;
   }
   unexpected();

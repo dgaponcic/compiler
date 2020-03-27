@@ -23,7 +23,8 @@ token TokenStream::next() {
   if (tok.type != null_token) {
     return tok;
   }
-
+  line = input_stream.get_line();
+  column = input_stream.get_column();
   read_while(is_whitespace, &input_stream);
   TokenCommand* command = tcd.dispatch(input_stream.peek(), &input_stream);
   curr_token = command->execute(&input_stream);
@@ -41,6 +42,9 @@ bool TokenStream::eof() {
   return input_stream.eof() && curr_token.type == null_token;
 }
 
-void TokenStream::croak(string msg) {
-  return input_stream.croak(msg);
+void TokenStream::croak(string msg, bool prev_tok_pos) {
+  if (prev_tok_pos) {
+    return input_stream.croak(msg, line, column);
+  }
+  return input_stream.croak(msg, input_stream.get_line(), input_stream.get_column());
 }

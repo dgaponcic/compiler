@@ -18,13 +18,15 @@ class InputStream {
 
     bool eof();
 
-    void croak(string msg);
+    void croak(string msg, int line, int column);
 
+    int get_line();
+    int get_column();
 
   private:
     int pos = 0;
     int column = 0;
-    int line = 0;
+    int line = 1;
 };
 
 #endif
