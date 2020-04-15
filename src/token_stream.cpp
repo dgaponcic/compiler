@@ -1,10 +1,9 @@
-#include "../include/input_stream.h"
-#include "../include/command.h"
-#include "../include/utils.h"
 #include "../include/token_stream.h"
+#include "../include/command.h"
+#include "../include/input_stream.h"
+#include "../include/utils.h"
 
-using namespace std; 
-
+using namespace std;
 
 TokenStream::TokenStream(char *input) {
   input_stream = InputStream(input);
@@ -26,13 +25,13 @@ token TokenStream::next() {
   line = input_stream.get_line();
   column = input_stream.get_column();
   read_while(is_whitespace, &input_stream);
-  TokenCommand* command = tcd.dispatch(input_stream.peek(), &input_stream);
+  TokenCommand *command = tcd.dispatch(input_stream.peek(), &input_stream);
   curr_token = command->execute(&input_stream);
   return curr_token;
 }
 
 token TokenStream::peek() {
-  if(curr_token.type != null_token) {
+  if (curr_token.type != null_token) {
     return curr_token;
   }
   return next();

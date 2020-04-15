@@ -23,6 +23,7 @@ enum expression_type {
   prog_expr = 10,
   return_expr = 11,
   paren_expr = 12,
+  instant_f_call_expr = 13,
 };
 
 class Expression {
@@ -87,6 +88,14 @@ class Call: public Expression {
     vector<Expression*> args;
     Call(Variable *function_name, vector<Expression*> funct_args);
 
+    expression_type get_type();
+};
+
+class Instant_Function_Call: public Expression {
+  public:
+    Lambda *body;
+    vector<Expression*> args;
+    Instant_Function_Call(Lambda *funct_body, vector<Expression*> funct_args);
     expression_type get_type();
 };
 

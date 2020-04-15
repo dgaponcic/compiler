@@ -1,25 +1,32 @@
+#include "command.h"
+#include "parser_expressions.h"
+#include "token_stream.h"
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include "command.h"
-#include "token_stream.h"
-#include "parser_expressions.h"
 
-using namespace std; 
+using namespace std;
 
 #ifndef PARSER_H
 #define PARSER_H
 
 class Parser {
   public:
-
   map<string, int> op_precedence = {
-    {"=", 1},
-    {"or", 2},
-    {"and", 3},
-    {"<", 7}, {">", 7}, {"<=", 7}, {">=", 7}, {"==", 7}, {"!=", 7},
-    {"+", 10}, {"-", 10},
-    {"*", 20}, {"/", 20}, {"%", 20},
+      {"=", 1},
+      {"or", 2},
+      {"and", 3},
+      {"<", 7},
+      {">", 7},
+      {"<=", 7},
+      {">=", 7},
+      {"==", 7},
+      {"!=", 7},
+      {"+", 10},
+      {"-", 10},
+      {"*", 20},
+      {"/", 20},
+      {"%", 20},
   };
 
   TokenStream *token_stream;
@@ -44,19 +51,20 @@ class Parser {
   Call *parse_call(Variable *funct);
   Return_Expr *parse_return();
   Number *parse_negative_numbers();
+  Instant_Function_Call *parse_instant_call(Lambda *funct);
 
   Expression *parse_keyword();
   Expression *parse_punct();
   Expression *parse_simple_types(token tok);
   Expression *parse_atom();
-  Expression* read_paren_expr();
-  Expression *maybe_call(function<Expression*()> expr);
+  Expression *read_paren_expr();
+  Expression *maybe_call(function<Expression *()> expr);
   Expression *maybe_binary(Expression *left, int my_prec);
-  Expression *parse_expression(bool is_function_open = false);
+  Expression *maybe_instant_call(Lambda *funct);
+  Expression *parse_expression();
 
-  vector<Expression*> delimited(string start, string stop, string separator, function<Expression*()> parser);
-  vector<Expression*> parse();
+  vector<Expression *> delimited(string start, string stop, string separator, function<Expression *()> parser);
+  vector<Expression *> parse();
 };
-
 
 #endif

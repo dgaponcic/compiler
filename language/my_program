@@ -1,14 +1,14 @@
-myFunct = lambda(n) {
-  if n <= 1 and n > 0 or n == true {
-    return 1;
+my_funct = lambda(n) {
+  if n <= 1 or n > 0 or n == true {
+    return (1 + 2 * (6 - 1)) * 5;
   } else {
     return n + myFunct(n - 1);
-  }
-}
+  };
+}(2);
 
-a1_a2 = "1235g gr , fsdg";
+string_example = "hello world";
 
 main = lambda(a) {
-  b = 25;
+  b = true;
   myFunct(10);
-}
+};

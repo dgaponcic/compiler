@@ -1,18 +1,18 @@
-#include <string>
-#include <vector>
-#include <bits/stdc++.h> 
 #include "../include/utils.h"
 #include "../include/input_stream.h"
+#include <bits/stdc++.h>
+#include <string>
+#include <vector>
 
 #define MAX_VAR_MEMORY 1000
 
 using namespace std;
 
-char* read_while(function<bool(char)> predicate, InputStream* input_stream) {
+char *read_while(function<bool(char)> predicate, InputStream *input_stream) {
   char *str = (char *)(malloc(sizeof(char) * MAX_VAR_MEMORY));
   int i = 0;
 
-  while(!input_stream->eof() && predicate(input_stream->peek())) {
+  while (!input_stream->eof() && predicate(input_stream->peek())) {
     str[i] = input_stream->next();
     i += 1;
   }
@@ -31,8 +31,8 @@ bool is_whitespace(char ch) {
 bool contains(char ch, char array_elements[]) {
   bool res = false;
   int len = get_length(array_elements);
-  for(int i = 0; i < len; i++){
-    if(array_elements[i] == ch) {
+  for (int i = 0; i < len; i++) {
+    if (array_elements[i] == ch) {
       res = true;
       break;
     }
@@ -65,7 +65,7 @@ bool is_boolean(string str) {
 }
 
 bool is_string_char(char ch) {
-  char symbols[] = {' ', ',', '.', ':'}; 
+  char symbols[] = {' ', ',', '.', ':'};
   return isalnum(ch) | contains(ch, symbols);
 }
 
@@ -89,18 +89,4 @@ bool is_keyword(string str) {
 
 bool is_digit(char ch) {
   return isdigit(ch);
-}
-
-char *read_program(char program_name[]) {
-  FILE *f = fopen(program_name, "rb");
-  fseek(f, 0, SEEK_END);
-  long fsize = ftell(f);
-  fseek(f, 0, SEEK_SET);
-
-  char *str = (char *)malloc(fsize + 1);
-  fread(str, fsize, 1, f);
-  fclose(f);
-
-  str[fsize] = '\0';
-  return str;
 }
