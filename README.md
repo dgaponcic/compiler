@@ -5,5 +5,7 @@ Implemented a compiler frontend part (Interpreter, Parser).
 
 to compile and execute use commands
 
-**g++ main.cpp src/* && ./a.out language/my_program**
+```
+g++ main.cpp src/* && ./a.out language/my_program
+```
 
